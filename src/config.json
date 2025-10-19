@@ -1,0 +1,18 @@
+{
+    "bot": {
+        "enabled": false,
+        "token": "YOUR_DISCORD_BOT_TOKEN_HERE",
+        "user_id": 123456789012345678
+    },
+    "theme": {
+        "background_color": "#0c0c0c",
+        "profile_color": "#1e1e1e",
+        "text_color": "#ffffff"
+    },
+    "userdata": {
+        "name": "Hey there!",
+        "username": "hey_hey",
+        "pronouns": "yeah/you",
+        "bio": "This is a sample profile.\nGo take a look at ~/.betterbio/config.json to set up your own!"
+    }
+}
