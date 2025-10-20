@@ -15,6 +15,8 @@ logger = Logger(name="betterbio", log_level="DEBUG").logger
 USER_ONLINE_STATUS = None
 STATUS_TEXT = None
 STATUS_EMOJI = None
+AVATAR_URL = None
+BANNER_URL = None
 CONFIG = {}
 BOT_CONFIG = {}
 
@@ -78,6 +80,8 @@ class DiscordBot(discord.Client):
         global USER_ONLINE_STATUS
         global STATUS_TEXT
         global STATUS_EMOJI
+        global AVATAR_URL
+        global BANNER_URL
         await self.wait_until_ready()
         user_id = CONFIG.get("bot", {}).get("user_id")
         
@@ -93,7 +97,6 @@ class DiscordBot(discord.Client):
                         member = guild.get_member(user_id)
                         if member:
                             USER_ONLINE_STATUS = str(member.status)
-
                             for act in member.activities:
                                 if isinstance(act, discord.CustomActivity):
                                     STATUS_TEXT = (str(act.name))
@@ -115,6 +118,8 @@ class DiscordBot(discord.Client):
                                     else:
                                         STATUS_EMOJI = None
                             logger.debug("Updated user status to %s", USER_ONLINE_STATUS)
+                            AVATAR_URL = user.avatar.url if user.avatar else None
+                            BANNER_URL = user.banner.url if user.banner else None
                             break
             except Exception as e:
                 logger.error("Error updating status: %s", e)
@@ -177,6 +182,14 @@ def main():
     @app.route('/api/profile/info')
     def profileinfo():
         return jsonify(CONFIG.get("userdata", {}))
+    
+    @app.route('/api/profile/avatar')
+    def profileavatar():
+        return jsonify(AVATAR_URL or "")
+    
+    @app.route('/api/profile/banner')
+    def profilebanner():
+        return jsonify(BANNER_URL or "")
     
     @app.route('/')
     def index():

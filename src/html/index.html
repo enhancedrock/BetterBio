@@ -36,21 +36,22 @@
                 bottom: 0;
                 left: 30px;
 
-                background-color: #151515;
+                background: var(--gradient, var(--gradient-color, #151515));
                 border-radius: 25px 25px 0 0;
                 box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05);
                 padding: 20px;
-                overflow: hidden;
+                overflow-y: auto;
             }
 
-            .profile::after {
+            .profile::before {
                 content: '';
                 position: absolute;
-                top: 140px;
+                top: 0;
                 left: 0;
                 right: 0;
-                bottom: 0;
-                background: var(--gradient, var(--gradient-color, #151515));
+                height: 140px;
+                background-color: #151515;
+                border-radius: 25px 25px 0 0;
                 z-index: 0;
             }
 
@@ -65,6 +66,20 @@
 
                 border-radius: 50%;
                 box-shadow: 0 0 0 6px rgba(255, 255, 255, 1);
+            }
+
+            .onlinedot {
+                position: absolute;
+                top: 160px;
+                left: 90px;
+
+                width: 25px;
+                height: 25px;
+                z-index: 2;
+
+                border-radius: 50%;
+                box-shadow: 0 0 0 6px rgba(255, 255, 255, 1);
+                background-color: #747f8d;
             }
 
             .profile-banner {
@@ -105,7 +120,7 @@
 
             .bio {
                 width: 325px;
-                height: 260px;
+                min-height: 260px;
                 box-sizing: border-box;
 
                 position: absolute;
@@ -113,10 +128,21 @@
                 left: 12.5px;
 
                 background-color: #151515;
-                border-radius: 25px;
-                padding: 20px;
-                overflow: hidden;
+                border-radius: 10px;
+                padding: 12.5px;
+                word-wrap: break-word;
                 z-index: 3;
+            }
+
+            .bio-content {
+                margin-top: 0;
+            }
+
+            .bio-header {
+                font-weight: bold;
+                font-size: 12px;
+                margin-top: 0px;
+                margin-bottom: 10px;
             }
 
             @media (max-width: 900px) {
@@ -162,17 +188,165 @@
     <body>
     <div class="container" id="container">
         <div class="profile" id="profile-content">
-            <img src="https://raw.githubusercontent.com/enhancedrock/enhancedrock/refs/heads/main/squishypfp.png" alt="Profile Image" class="profile-image" id="profile-image">
-            <img src="https://raw.githubusercontent.com/enhancedrock/enhancedrock/refs/heads/main/squishypfp.png" alt="Profile Banner" class="profile-banner" id="profile-banner">
-            <h1 class="displayname" id="displayname">Squishy</h1>
-            <p class="username" id="username">squishy</p>
+            <img src="" alt="Profile Image" class="profile-image" id="profile-image">
+            <div class="onlinedot" id="onlinedot"></div>
+            <img src="" alt="Profile Banner" class="profile-banner" id="profile-banner">
+            <h1 class="displayname" id="displayname">loading</h1>
+            <p class="username" id="username">loading</p>
             <div class="bio" id="bio">
-
+                <p class="bio-header">About Me</p>
+                <p class="bio-content" id="bio-content">loading</p>
             </div>
         </div>
     </div>
     <script>
+        function parseMarkdown(rawmd) {
+            let html = rawmd;
+
+            // Escape HTML special characters
+            html = html.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+            // Bold **text**
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+            // Italic *text*
+            html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+            // Links [text](url)
+            html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+            // Line breaks
+            html = html.replace(/\n/g, '<br>');
+
+            return html;
+        }
+
+        function getRandomBannerColor() {
+            const colors = [
+                '#5865f2', '#57f287', '#fee75c', '#eb459e', '#ed4245',
+                '#f38ba8', '#94b3fd', '#9bb59a', '#fab387', '#cba6f7',
+                '#74c7ec', '#a6e3a1', '#f9e2af', '#eba0ac', '#89b4fa'
+            ];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        function getDefaultDiscordAvatar() {
+            // Default Discord-style avatar - a simple circle with Discord's brand color
+            return 'data:image/svg+xml,' + encodeURIComponent(`
+                <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="50" fill="#5865F2"/>
+                    <text x="50" y="60" font-family="Arial, sans-serif" font-size="40" font-weight="bold" text-anchor="middle" fill="white">?</text>
+                </svg>
+            `);
+        }
+
+        function loadAvatar() {
+            const profileImage = document.getElementById('profile-image');
+            
+            fetch('/api/profile/avatar')
+                .then(response => response.json())
+                .then(avatarUrl => {
+                    if (avatarUrl && avatarUrl.trim() !== '') {
+                        // Test if the URL is valid by creating a temporary image
+                        const testImg = new Image();
+                        testImg.onload = function() {
+                            profileImage.src = avatarUrl;
+                        };
+                        testImg.onerror = function() {
+                            console.warn('Failed to load avatar from URL:', avatarUrl);
+                            profileImage.src = getDefaultDiscordAvatar();
+                        };
+                        // Set a timeout to fallback if loading takes too long
+                        setTimeout(() => {
+                            if (profileImage.src === '' || profileImage.src === window.location.href) {
+                                profileImage.src = getDefaultDiscordAvatar();
+                            }
+                        }, 5000);
+                        testImg.src = avatarUrl;
+                    } else {
+                        profileImage.src = getDefaultDiscordAvatar();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching avatar:', error);
+                    profileImage.src = getDefaultDiscordAvatar();
+                });
+        }
+
+        function loadBanner() {
+            const profileBanner = document.getElementById('profile-banner');
+            
+            fetch('/api/profile/banner')
+                .then(response => response.json())
+                .then(bannerUrl => {
+                    if (bannerUrl && bannerUrl.trim() !== '') {
+                        // Test if the URL is valid by creating a temporary image
+                        const testImg = new Image();
+                        testImg.onload = function() {
+                            // Remove any existing color banner
+                            const existingColorBanner = document.getElementById('color-banner');
+                            if (existingColorBanner) {
+                                existingColorBanner.remove();
+                            }
+                            profileBanner.src = bannerUrl;
+                            profileBanner.style.display = 'block';
+                        };
+                        testImg.onerror = function() {
+                            console.warn('Failed to load banner from URL:', bannerUrl);
+                            setupRandomColorBanner();
+                        };
+                        // Set a timeout to fallback if loading takes too long
+                        setTimeout(() => {
+                            if (profileBanner.src === '' || profileBanner.src === window.location.href) {
+                                setupRandomColorBanner();
+                            }
+                        }, 5000);
+                        testImg.src = bannerUrl;
+                    } else {
+                        setupRandomColorBanner();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching banner:', error);
+                    setupRandomColorBanner();
+                });
+        }
+
+        function setupRandomColorBanner() {
+            const profileBanner = document.getElementById('profile-banner');
+            const randomColor = getRandomBannerColor();
+            
+            // Hide the img element and set background color on parent element
+            profileBanner.style.display = 'none';
+            
+            // Create a div to act as colored banner
+            let colorBanner = document.getElementById('color-banner');
+            if (!colorBanner) {
+                colorBanner = document.createElement('div');
+                colorBanner.id = 'color-banner';
+                colorBanner.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    width: 100%;
+                    height: 140px;
+                    z-index: 0;
+                    border-radius: 25px 25px 0 0;
+                    background-color: ${randomColor};
+                `;
+                // Insert before the profile banner image
+                profileBanner.parentNode.insertBefore(colorBanner, profileBanner);
+            } else {
+                colorBanner.style.backgroundColor = randomColor;
+            }
+        }
+        
         window.addEventListener('load', function() {
+            // Load avatar and banner
+            loadAvatar();
+            loadBanner();
+            
             fetch('/api/profile/theme')
                 .then(response => response.json())
                 .then(data => {
@@ -184,16 +358,44 @@
                             document.querySelector('.container').style.background = darkerGradient;
                             document.querySelector('.profile').style.setProperty('--gradient', gradient);
                             document.querySelector('.profile-image').style.boxShadow = `0 0 0 6px ${data.profile_color[0]}`;
+                            document.querySelector('.onlinedot').style.boxShadow = `0 0 0 6px ${data.profile_color[0]}`;
                         } else if (data.profile_color) {
                             const darkerColor = `color-mix(in srgb, ${data.profile_color} 70%, black)`;
                             document.querySelector('.container').style.backgroundColor = darkerColor;
                             document.querySelector('.profile').style.setProperty('--gradient-color', data.profile_color);
                             document.querySelector('.profile-image').style.boxShadow = `0 0 0 6px ${data.profile_color}`;
+                            document.querySelector('.onlinedot').style.boxShadow = `0 0 0 6px ${data.profile_color}`;
                         }
                     }
                 })
                 .catch(error => {
                     console.error('Error fetching theme:', error);
+                });
+            fetch('api/profile/info')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('displayname').textContent = data.name || 'No Display Name';
+                    document.getElementById('username').textContent = `${data.username ? `@${data.username}` : '@no_username'} • ${data.pronouns || 'No pronouns'}`;
+                    document.getElementById('bio-content').textContent = data.bio || 'This user has no bio.';
+                })
+                .catch(error => {
+                    console.error('Error fetching profile info:', error);
+                });
+            fetch('api/status/online')
+                .then(response => response.json())
+                .then(data => {
+                    if (data === 'online') {
+                        document.getElementById('onlinedot').style.backgroundColor = "#43b581";
+                    }
+                    else if (data === 'idle') {
+                        document.getElementById('onlinedot').style.backgroundColor = "#faa61a";
+                    }
+                    else if (data === 'dnd') {
+                        document.getElementById('onlinedot').style.backgroundColor = "#f04747";
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching profile info:', error);
                 });
             document.getElementById('container').style.display = 'block';
         });
