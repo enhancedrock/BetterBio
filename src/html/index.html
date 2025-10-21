@@ -117,70 +117,68 @@
                 font-size: 16px;
                 z-index: 1;
             }
-
             .bio {
-                width: 325px;
-                min-height: 260px;
+                width: 315px;
+                min-height: 25px;
                 box-sizing: border-box;
 
                 position: absolute;
                 top: 260px;
-                left: 12.5px;
+                left: 50%;
+                transform: translateX(-50%);
 
                 background-color: #151515;
                 border-radius: 10px;
                 padding: 12.5px;
                 word-wrap: break-word;
                 z-index: 3;
+                padding-top: 0px;
             }
 
             .bio-content {
                 margin-top: 0;
+                margin-bottom: 0;
+            }
+
+            .bio-content p {
+                margin-top: 0;
+                margin-bottom: 0;
+            }
+
+            .bio-content p + p {
+                margin-top: 0.5em;
             }
 
             .bio-header {
                 font-weight: bold;
                 font-size: 12px;
-                margin-top: 0px;
-                margin-bottom: 10px;
+                margin-top: 14px;
+                margin-bottom: 8px;
             }
 
-            @media (max-width: 900px) {
+            @media (max-width: 768px) {
                 .container {
-                    width: 90vw;
-                    height: 80vh;
-                }
-            }
-
-            @media (max-width: 600px) {
-                .container {
-                    width: 95vw;
-                    height: 85vh;
+                    background: none !important;
+                    box-shadow: none !important;
+                    padding: 0 !important;
                 }
                 
                 .profile {
-                    width: calc(100% - 60px);
-                    left: 30px;
-                }
-            }
-
-            @media (max-width: 480px) {
-                .container {
-                    width: 100vw;
-                    height: 100vh;
-                    border-radius: 0;
-                    padding: 10px;
-                }
-                
-                .profile {
-                    width: calc(100% - 20px);
-                    left: 10px;
-                    height: calc(100% - 20px);
+                    display: block;
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    border-radius: 25px;
+                    width: 350px;
+                    height: 600px;
+                    max-width: 90vw;
+                    max-height: 90vh;
                 }
             }
 
             * {
-                color: #ffffff;
+                color: var(--text-color, #ffffff);
                 font-family: Arial, sans-serif;
             }
         </style>
@@ -199,28 +197,8 @@
             </div>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
     <script>
-        function parseMarkdown(rawmd) {
-            let html = rawmd;
-
-            // Escape HTML special characters
-            html = html.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-            // Bold **text**
-            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-            // Italic *text*
-            html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-
-            // Links [text](url)
-            html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-
-            // Line breaks
-            html = html.replace(/\n/g, '<br>');
-
-            return html;
-        }
-
         function getRandomBannerColor() {
             const colors = [
                 '#5865f2', '#57f287', '#fee75c', '#eb459e', '#ed4245',
@@ -230,8 +208,7 @@
             return colors[Math.floor(Math.random() * colors.length)];
         }
 
-        function getDefaultDiscordAvatar() {
-            // Default Discord-style avatar - a simple circle with Discord's brand color
+        function getDefaultAvatar() {
             return 'data:image/svg+xml,' + encodeURIComponent(`
                 <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="50" cy="50" r="50" fill="#5865F2"/>
@@ -247,29 +224,29 @@
                 .then(response => response.json())
                 .then(avatarUrl => {
                     if (avatarUrl && avatarUrl.trim() !== '') {
-                        // Test if the URL is valid by creating a temporary image
+                        // test if the URL is valid by creating a temporary pfp
                         const testImg = new Image();
                         testImg.onload = function() {
                             profileImage.src = avatarUrl;
                         };
                         testImg.onerror = function() {
                             console.warn('Failed to load avatar from URL:', avatarUrl);
-                            profileImage.src = getDefaultDiscordAvatar();
+                            profileImage.src = getDefaultAvatar();
                         };
-                        // Set a timeout to fallback if loading takes too long
+                        // fallback if loading takes too long
                         setTimeout(() => {
                             if (profileImage.src === '' || profileImage.src === window.location.href) {
-                                profileImage.src = getDefaultDiscordAvatar();
+                                profileImage.src = getDefaultAvatar();
                             }
                         }, 5000);
                         testImg.src = avatarUrl;
                     } else {
-                        profileImage.src = getDefaultDiscordAvatar();
+                        profileImage.src = getDefaultAvatar();
                     }
                 })
                 .catch(error => {
                     console.error('Error fetching avatar:', error);
-                    profileImage.src = getDefaultDiscordAvatar();
+                    profileImage.src = getDefaultAvatar();
                 });
         }
 
@@ -280,10 +257,10 @@
                 .then(response => response.json())
                 .then(bannerUrl => {
                     if (bannerUrl && bannerUrl.trim() !== '') {
-                        // Test if the URL is valid by creating a temporary image
+                        // test if the URL is valid by creating a temporary banner
                         const testImg = new Image();
                         testImg.onload = function() {
-                            // Remove any existing color banner
+                            // remove any existing temp banner
                             const existingColorBanner = document.getElementById('color-banner');
                             if (existingColorBanner) {
                                 existingColorBanner.remove();
@@ -295,7 +272,7 @@
                             console.warn('Failed to load banner from URL:', bannerUrl);
                             setupRandomColorBanner();
                         };
-                        // Set a timeout to fallback if loading takes too long
+                        // fallback if loading takes too long
                         setTimeout(() => {
                             if (profileBanner.src === '' || profileBanner.src === window.location.href) {
                                 setupRandomColorBanner();
@@ -316,10 +293,10 @@
             const profileBanner = document.getElementById('profile-banner');
             const randomColor = getRandomBannerColor();
             
-            // Hide the img element and set background color on parent element
+            // hide image
             profileBanner.style.display = 'none';
             
-            // Create a div to act as colored banner
+            // create div to act as colored banner
             let colorBanner = document.getElementById('color-banner');
             if (!colorBanner) {
                 colorBanner = document.createElement('div');
@@ -335,7 +312,7 @@
                     border-radius: 25px 25px 0 0;
                     background-color: ${randomColor};
                 `;
-                // Insert before the profile banner image
+                // insert before profile banner
                 profileBanner.parentNode.insertBefore(colorBanner, profileBanner);
             } else {
                 colorBanner.style.backgroundColor = randomColor;
@@ -343,7 +320,7 @@
         }
         
         window.addEventListener('load', function() {
-            // Load avatar and banner
+            // load pfp & banner
             loadAvatar();
             loadBanner();
             
@@ -359,12 +336,24 @@
                             document.querySelector('.profile').style.setProperty('--gradient', gradient);
                             document.querySelector('.profile-image').style.boxShadow = `0 0 0 6px ${data.profile_color[0]}`;
                             document.querySelector('.onlinedot').style.boxShadow = `0 0 0 6px ${data.profile_color[0]}`;
+
                         } else if (data.profile_color) {
                             const darkerColor = `color-mix(in srgb, ${data.profile_color} 70%, black)`;
                             document.querySelector('.container').style.backgroundColor = darkerColor;
                             document.querySelector('.profile').style.setProperty('--gradient-color', data.profile_color);
                             document.querySelector('.profile-image').style.boxShadow = `0 0 0 6px ${data.profile_color}`;
                             document.querySelector('.onlinedot').style.boxShadow = `0 0 0 6px ${data.profile_color}`;
+                        }
+                        // set text color from theme data
+                        if (data.text_color) {
+                            document.documentElement.style.setProperty('--text-color', data.text_color);
+                            // apply to existing elements
+                            const textElements = document.querySelectorAll('*');
+                            textElements.forEach(element => {
+                                element.style.color = data.text_color;
+                            });
+                            // store the color globally for new elements
+                            window.themeTextColor = data.text_color;
                         }
                     }
                 })
@@ -376,7 +365,67 @@
                 .then(data => {
                     document.getElementById('displayname').textContent = data.name || 'No Display Name';
                     document.getElementById('username').textContent = `${data.username ? `@${data.username}` : '@no_username'} • ${data.pronouns || 'No pronouns'}`;
-                    document.getElementById('bio-content').textContent = data.bio || 'This user has no bio.';
+                    const bioText = (data.bio || 'This user has no bio.').replace(/\\n/g, '\n');
+                    marked.setOptions({
+                        breaks: true, // convert single line breaks to <br>
+                        gfm: true     // enable GitHub Flavored Markdown
+                    });
+                    document.getElementById('bio-content').innerHTML = marked.parse(bioText);
+                    if (data.connections && data.connections.length > 0) {
+                        const bioSection = document.getElementById('bio');
+                        
+                        const connectionsHeader = document.createElement('p');
+                        connectionsHeader.className = 'bio-header';
+                        connectionsHeader.textContent = 'Connections';
+                        bioSection.appendChild(connectionsHeader);
+                        
+                        data.connections.forEach(connection => {
+                            const connectionDiv = document.createElement('div');
+                            connectionDiv.style.cssText = 'display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;';
+                            
+                            if (connection.iconurl) {
+                                const icon = document.createElement('img');
+                                icon.src = connection.iconurl;
+                                icon.style.cssText = 'width: 20px; height: 20px; margin-right: 8px; filter: brightness(0) invert(1);';
+                                connectionDiv.appendChild(icon);
+                            }
+                            
+                            const label = document.createElement('span');
+                            label.textContent = connection.label;
+                            if (window.themeTextColor) {
+                                label.style.color = window.themeTextColor;
+                            }
+                            
+                            connectionDiv.appendChild(label);
+                            
+                            connectionDiv.addEventListener('click', () => {
+                                window.open(connection.url, '_blank');
+                            });
+                            
+                            bioSection.appendChild(connectionDiv);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching profile info:', error);
+                });
+            fetch('api/profile/joindate')
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.trim() !== '') {
+                        const bioSection = document.getElementById('bio');
+                        
+                        const joinedHeader = document.createElement('p');
+                        joinedHeader.className = 'bio-header';
+                        joinedHeader.textContent = 'Joined at';
+                        
+                        const joinedContent = document.createElement('p');
+                        joinedContent.className = 'bio-content';
+                        joinedContent.textContent = data;
+                        
+                        bioSection.appendChild(joinedHeader);
+                        bioSection.appendChild(joinedContent);
+                    }
                 })
                 .catch(error => {
                     console.error('Error fetching profile info:', error);
@@ -392,6 +441,9 @@
                     }
                     else if (data === 'dnd') {
                         document.getElementById('onlinedot').style.backgroundColor = "#f04747";
+                    }
+                    else if (data === '') {
+                        document.getElementById('onlinedot').style.display = 'none';
                     }
                 })
                 .catch(error => {

@@ -17,6 +17,7 @@ STATUS_TEXT = None
 STATUS_EMOJI = None
 AVATAR_URL = None
 BANNER_URL = None
+JOINDATE_STRING = ""
 CONFIG = {}
 BOT_CONFIG = {}
 
@@ -91,40 +92,80 @@ class DiscordBot(discord.Client):
 
         while not SHUTDOWN_EVENT.is_set():
             try:
-                user = self.get_user(user_id)
-                if user:
-                    for guild in self.guilds:
-                        member = guild.get_member(user_id)
-                        if member:
-                            USER_ONLINE_STATUS = str(member.status)
-                            for act in member.activities:
-                                if isinstance(act, discord.CustomActivity):
-                                    STATUS_TEXT = (str(act.name))
-                                    logger.debug("Emoji = %s", act.emoji)
-                                    if act.emoji:
-                                        if isinstance(act.emoji, str):
-                                            STATUS_EMOJI = act.emoji
-                                        elif hasattr(act.emoji, 'name') and act.emoji.name:
-                                            # Handle PartialEmoji objects
-                                            if act.emoji.id is None:
-                                                # Unicode emoji - convert to Twemoji URL
-                                                codepoint = hex(ord(act.emoji.name))[2:]
-                                                STATUS_EMOJI = f"https://twemoji.maxcdn.com/v/latest/72x72/{codepoint}.png"
-                                            else:
-                                                # Custom Discord emoji
-                                                STATUS_EMOJI = act.emoji.url
-                                        else:
-                                            STATUS_EMOJI = str(act.emoji)
-                                    else:
-                                        STATUS_EMOJI = None
-                            logger.debug("Updated user status to %s", USER_ONLINE_STATUS)
-                            AVATAR_URL = user.avatar.url if user.avatar else None
-                            BANNER_URL = user.banner.url if user.banner else None
-                            break
+                await self._update_user_data(user_id)
             except Exception as e:
                 logger.error("Error updating status: %s", e)
             
             await asyncio.sleep(30)
+    
+    async def _update_user_data(self, user_id):
+        """Helper method to update user data"""
+        global USER_ONLINE_STATUS, AVATAR_URL, BANNER_URL, JOINDATE_STRING
+        
+        user = await self.fetch_user(user_id)
+        if not user:
+            return
+            
+        # Update avatar and banner URLs
+        AVATAR_URL = user.avatar.url if user.avatar else None
+        BANNER_URL = user.banner.url if user.banner else None
+        JOINDATE_STRING = user.created_at.strftime("%d %B %Y")
+        logger.debug("Updated user PFP to %s", AVATAR_URL)
+        logger.debug("Updated user banner to %s", BANNER_URL)
+        
+        # Find member in any guild to get status and activities
+        member = self._find_member_in_guilds(user_id)
+        if not member:
+            return
+            
+        USER_ONLINE_STATUS = str(member.status)
+        logger.debug("Updated user status to %s", USER_ONLINE_STATUS)
+        
+        # Update custom activity
+        self._update_custom_activity(member)
+    
+    def _find_member_in_guilds(self, user_id):
+        """Find member in any guild"""
+        for guild in self.guilds:
+            member = guild.get_member(user_id)
+            if member:
+                return member
+        return None
+    
+    def _update_custom_activity(self, member):
+        """Update custom activity status and emoji"""
+        global STATUS_TEXT, STATUS_EMOJI
+        
+        for act in member.activities:
+            if isinstance(act, discord.CustomActivity):
+                STATUS_TEXT = str(act.name) if act.name else ""
+                logger.debug("Emoji = %s", act.emoji)
+                STATUS_EMOJI = self._process_emoji(act.emoji)
+                return
+        
+        # Reset if no custom activity found
+        STATUS_TEXT = ""
+        STATUS_EMOJI = None
+    
+    def _process_emoji(self, emoji):
+        """Process emoji and return appropriate URL or string"""
+        if not emoji:
+            return None
+            
+        if isinstance(emoji, str):
+            return emoji
+            
+        if hasattr(emoji, 'name') and emoji.name:
+            # Handle PartialEmoji objects
+            if emoji.id is None:
+                # Unicode emoji - convert to Twemoji URL
+                codepoint = hex(ord(emoji.name))[2:]
+                return f"https://twemoji.maxcdn.com/v/latest/72x72/{codepoint}.png"
+            else:
+                # Custom Discord emoji
+                return emoji.url
+        
+        return str(emoji)
     
     async def on_ready(self):
         logger.info("Discord bot logged in as %s", self.user)
@@ -132,12 +173,17 @@ class DiscordBot(discord.Client):
 
 def run_bot():
     """Run the Discord bot"""
+    global AVATAR_URL, BANNER_URL
     if not BOT_CONFIG.get('enabled', False):
+        AVATAR_URL = CONFIG.get("userdata", {}).get("pfp")
+        BANNER_URL = CONFIG.get("userdata", {}).get("banner")
         logger.info("Discord bot integration is disabled in config.")
         return
     
     token = BOT_CONFIG.get('token')
     if not token:
+        AVATAR_URL = CONFIG.get("userdata", {}).get("pfp")
+        BANNER_URL = CONFIG.get("userdata", {}).get("banner")
         logger.error("Discord bot token not found in config.")
         return
     
@@ -149,6 +195,8 @@ def run_bot():
     try:
         loop.run_until_complete(bot.start(token))
     except Exception as e:
+        AVATAR_URL = CONFIG.get("userdata", {}).get("pfp")
+        BANNER_URL = CONFIG.get("userdata", {}).get("banner")
         logger.error("Discord bot encountered an error: %s", e)
     finally:
         loop.close()
@@ -165,7 +213,7 @@ def main():
 
     @app.route('/api/status/online')
     def onlinetype():
-        return jsonify(USER_ONLINE_STATUS or "offline")
+        return jsonify(USER_ONLINE_STATUS or "")
     
     @app.route('/api/status/text')
     def statustext():
@@ -182,7 +230,7 @@ def main():
     @app.route('/api/profile/info')
     def profileinfo():
         return jsonify(CONFIG.get("userdata", {}))
-    
+
     @app.route('/api/profile/avatar')
     def profileavatar():
         return jsonify(AVATAR_URL or "")
@@ -190,6 +238,10 @@ def main():
     @app.route('/api/profile/banner')
     def profilebanner():
         return jsonify(BANNER_URL or "")
+    
+    @app.route('/api/profile/joindate')
+    def profilejoindate():
+        return jsonify(JOINDATE_STRING or "")
     
     @app.route('/')
     def index():
@@ -206,9 +258,14 @@ def main():
         full_path = os.path.join(file_dir, path)
         logger.debug("Attempting to serve static file: %s", full_path)
         logger.debug("File exists: %s", os.path.exists(full_path))
-        logger.debug("Static directory exists: %s", os.path.exists(file_dir))
-        if os.path.exists(file_dir):
-            logger.debug("Files in static directory: %s", os.listdir(file_dir))
+        return send_from_directory(file_dir, path)
+
+    @app.route('/pages/<path:path>')
+    def serve_pages(path):
+        file_dir = os.path.join(os.path.expanduser("~"), ".betterbio", "pages")
+        full_path = os.path.join(file_dir, path)
+        logger.debug("Attempting to serve page: %s", full_path)
+        logger.debug("Page exists: %s", os.path.exists(full_path))
         return send_from_directory(file_dir, path)
 
     bot_thread = threading.Thread(target=run_bot, daemon=True)
