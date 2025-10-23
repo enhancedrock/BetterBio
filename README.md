@@ -18,7 +18,26 @@ I like the idea of having a Carrd, but found the limitations of the free plan to
 You can install it from PyPI using pip with `install betterbio` on a Python version >=3.10
 
 ## docker
-(WIP - Need to publish on PyPI first)
+```bash
+docker run -d \
+  -p 8080:8080 \
+  -v /path/to/betterbio/data:/home/betterbio/.betterbio \
+  enhancedrock/betterbio:latest
+```
+
+## docker-compose
+```yaml
+---
+services:
+  betterbio:
+    image: enhancedrock/betterbio:latest
+    container_name: betterbio
+    volumes:
+      - /path/to/betterbio/data:/home/betterbio/.betterbio
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+```
 
 # demo
 You can view my own personal betterbio @ https://enhancedrock.tech.
