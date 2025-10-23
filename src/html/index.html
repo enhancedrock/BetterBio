@@ -3,6 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="icon" href="/favicon.ico">
         <title>betterbio</title>
         <style>
             body {
@@ -41,6 +42,116 @@
                 box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05);
                 padding: 20px;
                 overflow-y: auto;
+                overflow-x: hidden;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+
+            .profile::-webkit-scrollbar {
+                display: none;
+            }
+
+            .pages-section {
+                position: absolute;
+                top: 40px;
+                left: 400px;
+                right: 20px;
+                height: 560px;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .pages-navbar {
+                height: 50px;
+                border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+                overflow-x: auto;
+                overflow-y: hidden;
+                display: flex;
+                align-items: center;
+                padding: 0 10px;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+
+            .page-tab {
+                flex-shrink: 0;
+                padding: 8px 16px;
+                margin-right: 10px;
+                background-color: transparent;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 500;
+                transition: all 0.2s ease;
+                white-space: nowrap;
+            }
+
+            .page-tab:hover {
+                background-color: rgba(255, 255, 255, 0.1);
+            }
+
+            .page-tab.active {
+                background-color: rgba(255, 255, 255, 0.15);
+                color: var(--text-color, #ffffff);
+            }
+
+            .page-tab.inactive {
+                color: color-mix(in srgb, var(--text-color, #ffffff) 60%, transparent);
+            }
+
+            .page-content {
+                flex: 1;
+                border-radius: 10px;
+                padding: 20px;
+                overflow-y: auto;
+                overflow-x: hidden;
+                word-wrap: break-word;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+
+            .page-content::-webkit-scrollbar {
+                display: none;
+            }
+
+            .page-content h1, .page-content h2, .page-content h3, 
+            .page-content h4, .page-content h5, .page-content h6 {
+                margin-top: 0;
+                margin-bottom: 0.5em;
+            }
+
+            .page-content p {
+                margin: 0 0 1em 0;
+                line-height: 1.6;
+            }
+
+            .page-content ul, .page-content ol {
+                margin: 0 0 1em 0;
+                padding-left: 1.5em;
+            }
+
+            .page-content code {
+                background-color: rgba(255, 255, 255, 0.1);
+                padding: 2px 4px;
+                border-radius: 3px;
+                font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+                font-size: 0.9em;
+            }
+
+            .page-content pre {
+                background-color: rgba(255, 255, 255, 0.1);
+                padding: 15px;
+                border-radius: 6px;
+                overflow-x: auto;
+                margin: 0 0 1em 0;
+            }
+
+            .page-content blockquote {
+                border-left: 4px solid rgba(255, 255, 255, 0.3);
+                padding-left: 15px;
+                margin: 0 0 1em 0;
+                font-style: italic;
             }
 
             .profile::before {
@@ -80,6 +191,61 @@
                 border-radius: 50%;
                 box-shadow: 0 0 0 6px rgba(255, 255, 255, 1);
                 background-color: #747f8d;
+            }
+
+            .status-bubble {
+                position: absolute;
+                top: 120px;
+                left: 135px;
+                z-index: 2;
+
+                background-color: #0c0c0c;
+                border-radius: 15px;
+                padding: 8px 12px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+                
+                display: none;
+                align-items: center;
+                gap: 8px;
+                
+                max-width: 185px;
+                width: fit-content;
+                word-wrap: break-word;
+                font-size: 13px;
+                line-height: 1.3;
+                
+                transition: max-width 0.3s ease, box-shadow 0.3s ease;
+                cursor: pointer;
+            }
+
+            .status-bubble:hover {
+                max-width: 185px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+                z-index: 10;
+            }
+
+            .status-bubble.visible {
+                display: flex;
+            }
+
+            .status-emoji {
+                width: 16px;
+                height: 16px;
+                flex-shrink: 0;
+                border-radius: 2px;
+            }
+
+            .status-text {
+                flex: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                transition: white-space 0.3s ease;
+            }
+
+            .status-bubble:hover .status-text {
+                white-space: normal;
+                word-wrap: break-word;
             }
 
             .profile-banner {
@@ -175,6 +341,10 @@
                     max-width: 90vw;
                     max-height: 90vh;
                 }
+
+                .pages-section {
+                    display: none;
+                }
             }
 
             * {
@@ -188,12 +358,23 @@
         <div class="profile" id="profile-content">
             <img src="" alt="Profile Image" class="profile-image" id="profile-image">
             <div class="onlinedot" id="onlinedot"></div>
+            <div class="status-bubble" id="status-bubble">
+                <img src="" alt="Status Emoji" class="status-emoji" id="status-emoji" style="display: none;">
+                <span class="status-text" id="status-text"></span>
+            </div>
             <img src="" alt="Profile Banner" class="profile-banner" id="profile-banner">
             <h1 class="displayname" id="displayname">loading</h1>
             <p class="username" id="username">loading</p>
             <div class="bio" id="bio">
                 <p class="bio-header">About Me</p>
                 <p class="bio-content" id="bio-content">loading</p>
+            </div>
+        </div>
+        <div class="pages-section" id="pages-section">
+            <div class="pages-navbar" id="pages-navbar">
+            </div>
+            <div class="page-content" id="page-content">
+                <p>loading page...</p>
             </div>
         </div>
     </div>
@@ -319,16 +500,197 @@
             }
         }
         
+        let currentActivePage = null;
+        let availablePages = [];
+
+        function loadPages() {
+            fetch('/pages')
+                .then(response => response.json())
+                .then(pages => {
+                    availablePages = pages;
+                    setupPagesNavbar(pages);
+                    if (pages.length > 0) {
+                        // find preferred default page (about/ABOUT/readme/README)
+                        const preferredPages = ['about', 'ABOUT', 'readme', 'README'];
+                        let defaultPage = pages[0]; // fallback to first page
+                        
+                        for (const preferred of preferredPages) {
+                            if (pages.includes(preferred)) {
+                                defaultPage = preferred;
+                                break;
+                            }
+                        }
+                        
+                        loadPageContent(defaultPage);
+                        setActiveTab(defaultPage);
+                    } else {
+                        document.getElementById('page-content').style.display = 'none';
+                        document.getElementById('pages-navbar').style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching pages:', error);
+                    document.getElementById('page-content').style.display = 'none';
+                    document.getElementById('pages-navbar').style.display = 'none';
+                });
+        }
+
+        function setupPagesNavbar(pages) {
+            const navbar = document.getElementById('pages-navbar');
+            navbar.innerHTML = '';
+            
+            pages.forEach(pageName => {
+                const tab = document.createElement('button');
+                tab.className = 'page-tab inactive';
+                tab.textContent = pageName;
+                tab.dataset.pageName = pageName;
+                
+                tab.addEventListener('click', () => {
+                    loadPageContent(pageName);
+                    setActiveTab(pageName);
+                });
+                
+                navbar.appendChild(tab);
+            });
+        }
+
+        function setActiveTab(activePage) {
+            currentActivePage = activePage;
+            const tabs = document.querySelectorAll('.page-tab');
+            tabs.forEach(tab => {
+                if (tab.dataset.pageName === activePage) {
+                    tab.className = 'page-tab active';
+                    if (window.themeTextColor) {
+                        tab.style.color = window.themeTextColor;
+                    }
+                } else {
+                    tab.className = 'page-tab inactive';
+                    if (window.themeTextColor) {
+                        tab.style.color = `color-mix(in srgb, ${window.themeTextColor} 60%, transparent)`;
+                    }
+                }
+            });
+        }
+
+        function loadPageContent(pageName) {
+            const contentDiv = document.getElementById('page-content');
+            contentDiv.innerHTML = '<p>loading page...</p>';
+            
+            fetch(`/page/${pageName}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Failed to load page: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(markdownContent => {
+                    marked.setOptions({
+                        breaks: true,
+                        gfm: true
+                    });
+                    contentDiv.innerHTML = marked.parse(markdownContent);
+                    
+                    // apply theme text color to all new elements
+                    if (window.themeTextColor) {
+                        const newElements = contentDiv.querySelectorAll('*');
+                        newElements.forEach(element => {
+                            element.style.color = window.themeTextColor;
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading page content:', error);
+                    contentDiv.innerHTML = `<p>Error loading page "${pageName}": ${error.message}</p>`;
+                });
+        }
+
+        function updatePageTabsColor(textColor) {
+            const tabs = document.querySelectorAll('.page-tab');
+            tabs.forEach(tab => {
+                if (tab.classList.contains('active')) {
+                    tab.style.color = textColor;
+                } else {
+                    tab.style.color = `color-mix(in srgb, ${textColor} 60%, transparent)`;
+                }
+            });
+        }
+
+        function loadStatusBubble() {
+            const statusBubble = document.getElementById('status-bubble');
+            const statusEmoji = document.getElementById('status-emoji');
+            const statusText = document.getElementById('status-text');
+            
+            Promise.all([
+                fetch('/api/status/text').then(response => response.json()),
+                fetch('/api/status/emoji').then(response => response.json())
+            ])
+            .then(([text, emoji]) => {
+                const hasText = text && text.trim() !== '';
+                const hasEmoji = emoji && emoji.trim() !== '';
+                
+                if (hasText || hasEmoji) {
+                    if (hasEmoji) {
+                        // Check if emoji is a URL (custom Discord emoji or Twemoji)
+                        if (emoji.startsWith('http')) {
+                            statusEmoji.src = emoji;
+                            statusEmoji.style.display = 'block';
+                        } else {
+                            // Unicode emoji - display as text
+                            statusEmoji.style.display = 'none';
+                            statusText.textContent = `${emoji} ${text || ''}`.trim();
+                        }
+                    } else {
+                        statusEmoji.style.display = 'none';
+                    }
+                    
+                    if (hasText && hasEmoji && emoji.startsWith('http')) {
+                        statusText.textContent = text;
+                    } else if (hasText && (!hasEmoji || !emoji.startsWith('http'))) {
+                        // Text already set above for unicode emoji case
+                        if (!hasEmoji) {
+                            statusText.textContent = text;
+                        }
+                    }
+                    
+                    statusBubble.classList.add('visible');
+                    
+                    // Apply theme color if available
+                    if (window.themeTextColor) {
+                        statusText.style.color = window.themeTextColor;
+                    }
+                } else {
+                    statusBubble.classList.remove('visible');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading status:', error);
+                statusBubble.classList.remove('visible');
+            });
+        }
+
         window.addEventListener('load', function() {
             // load pfp & banner
             loadAvatar();
             loadBanner();
+            
+            // load pages
+            loadPages();
+            
+            // load status bubble
+            loadStatusBubble();
             
             fetch('/api/profile/theme')
                 .then(response => response.json())
                 .then(data => {
                     if (data.background_color) {
                         document.body.style.backgroundColor = data.background_color;
+                        
+                        // update status bubble background to match page background
+                        const statusBubble = document.getElementById('status-bubble');
+                        if (statusBubble) {
+                            statusBubble.style.backgroundColor = data.background_color;
+                        }
+                        
                         if (Array.isArray(data.profile_color)) {
                             const gradient = `linear-gradient(180deg, ${data.profile_color[0]} 0%, ${data.profile_color[1]} 100%)`;
                             const darkerGradient = `linear-gradient(180deg, color-mix(in srgb, ${data.profile_color[0]} 70%, black) 0%, color-mix(in srgb, ${data.profile_color[1]} 70%, black) 100%)`;
@@ -354,6 +716,22 @@
                             });
                             // store the color globally for new elements
                             window.themeTextColor = data.text_color;
+                            
+                            // update page tabs if they exist
+                            updatePageTabsColor(data.text_color);
+                            
+                            // update status bubble text color
+                            const statusText = document.getElementById('status-text');
+                            if (statusText) {
+                                statusText.style.color = data.text_color;
+                            }
+                        }
+
+                        if (data.title) {
+                            document.title = data.title;
+                        }
+                        else {
+                            document.title = 'BetterBio';
                         }
                     }
                 })
@@ -392,6 +770,7 @@
                             
                             const label = document.createElement('span');
                             label.textContent = connection.label;
+                            label.style.textDecoration = 'underline';
                             if (window.themeTextColor) {
                                 label.style.color = window.themeTextColor;
                             }

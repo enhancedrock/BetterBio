@@ -10,7 +10,7 @@ from pathlib import Path
 from flask import Flask, jsonify, send_from_directory
 import discord
 from .logger import Logger
-logger = Logger(name="betterbio", log_level="DEBUG").logger
+logger = Logger(name="betterbio", log_level="INFO").logger
 
 USER_ONLINE_STATUS = None
 STATUS_TEXT = None
@@ -259,20 +259,43 @@ def main():
         logger.debug("Attempting to serve static file: %s", full_path)
         logger.debug("File exists: %s", os.path.exists(full_path))
         return send_from_directory(file_dir, path)
+    
+    @app.route('/pages')
+    def list_pages():
+        pages_dir = os.path.join(os.path.expanduser("~"), ".betterbio", "pages")
+        try:
+            files = os.listdir(pages_dir)
+            md_files = [f[:-3] for f in files if f.endswith('.md')]
+            return jsonify(md_files)
+        except OSError:
+            return jsonify([])
 
-    @app.route('/pages/<path:path>')
+
+    @app.route('/page/<path:path>')
     def serve_pages(path):
         file_dir = os.path.join(os.path.expanduser("~"), ".betterbio", "pages")
-        full_path = os.path.join(file_dir, path)
+        full_path = os.path.join(file_dir, path + ".md")
         logger.debug("Attempting to serve page: %s", full_path)
         logger.debug("Page exists: %s", os.path.exists(full_path))
-        return send_from_directory(file_dir, path)
+        try:
+            return send_from_directory(file_dir, path + ".md")
+        except FileNotFoundError:
+            return "Page not found", 404
+    
+    @app.route('/favicon.ico')
+    def favicon():
+        user_favicon = os.path.join(os.path.expanduser("~"), ".betterbio", "favicon.ico")
+        if os.path.exists(user_favicon):
+            return send_from_directory(os.path.dirname(user_favicon), "favicon.ico")
+
+        src_dir = Path(__file__).parent / "html"
+        return send_from_directory(src_dir, "favicon.ico")
 
     bot_thread = threading.Thread(target=run_bot, daemon=True)
     bot_thread.start()
 
     try:
-        app.run(host='127.0.0.1', port=8080, static_files=None)
+        app.run(host=CONFIG.get("host", "0.0.0.0"), port=CONFIG.get("port", 8080), static_files=None, debug=False)
     except KeyboardInterrupt:
         logger.info("Shutting down Flask server...")
     finally:

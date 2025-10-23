@@ -1,0 +1,30 @@
+FROM python:3.10-slim
+
+# metadata
+LABEL maintainer="Ruby Betwined <ruby@enhancedrock.tech>"
+LABEL description="Docker container for betterbio, a Links-in-Bio style site designed to mimic a Discord profile."
+
+# ensure UTF-8 and no interactive prompts
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# create a non-root user
+RUN useradd -m betterbio
+
+# install betterbio from pypi
+RUN pip install --no-cache-dir betterbio
+
+# switch to that user
+USER betterbio
+
+# set the working directory
+WORKDIR /home/betterbio
+
+# expose betterbio
+EXPOSE 8080
+
+# define volume for persistent storage
+VOLUME ["/home/betterbio/.betterbio"]
+
+# vroom vroom
+CMD ["betterbio"]
