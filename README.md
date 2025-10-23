@@ -14,7 +14,7 @@ BetterBio is a "links in bio" site, akin to Carrd or Beacons, that designs to mi
 I like the idea of having a Carrd, but found the limitations of the free plan to be too.. well, limiting. I also thought it would be cool to be able to show my current Discord online status, status text and type.
 
 # how?
-## from pypi
+## from pypi
 You can install it from PyPI using pip with `install betterbio` on a Python version >=3.10
 
 ## docker
