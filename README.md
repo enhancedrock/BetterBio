@@ -8,7 +8,7 @@ a self-hosted link-in-bio style site designed to mimic a discord profile
 </p>
 
 # what?
-BetterBio is a "links in bio" site, akin to Carrd or Beacons, that designs to mimic the look and feel of a Discord profile.
+BetterBio is a "links in bio" site, akin to Carrd or Beacons, that's designed to mimic the look and feel of a Discord profile.
 
 # why?
 I like the idea of having a Carrd, but found the limitations of the free plan to be too.. well, limiting. I also thought it would be cool to be able to show my current Discord online status, status text and type.
