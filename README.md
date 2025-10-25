@@ -15,7 +15,7 @@ I like the idea of having a Carrd, but found the limitations of the free plan to
 
 # how?
 ## from pypi
-You can install it from PyPI using pip with `install betterbio` on a Python version >=3.10
+You can install it from PyPI using pip with `install betterbio` on a Python version >=3.10 and run it with `betterbio` (assuming python is in your PATH, if not, you can set up a venv and install it there)
 
 ## docker
 ```bash
